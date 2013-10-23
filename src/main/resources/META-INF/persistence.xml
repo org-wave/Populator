@@ -6,16 +6,11 @@
 	<persistence-unit name="populatorPU" transaction-type="RESOURCE_LOCAL">
 		<provider>org.hibernate.ejb.HibernatePersistence</provider>
 
-		<class>org.wave.entities.StaticEntity</class>
-		<class>org.wave.entities.PrimaryKeyEntity</class>
-		<class>org.wave.entities.NullEntity</class>
 		<class>org.wave.entities.BasicEntity</class>
 		<class>org.wave.entities.EmbeddedEntity</class>
 		<class>org.wave.entities.OneToOneEntity</class>
 		<class>org.wave.entities.OneToOneBidirectionalEntity</class>
 		<class>org.wave.entities.OneToOneBidirectionalOwner</class>
-		<class>org.wave.entities.UnsupportedTypeEntity</class>
-		<class>org.wave.entities.IllegalEntity</class>
 
 		<properties>
 			<property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:populatorDB" />
@@ -24,7 +19,7 @@
 			<property name="javax.persistence.jdbc.password" value="" />
 
 			<property name="hibernate.dialect" value="org.hibernate.dialect.HSQLDialect" />
-			<property name="hibernate.hbm2ddl.auto" value="update" />
+			<property name="hibernate.hbm2ddl.auto" value="create-drop" />
 			<property name="hibernate.show_sql" value="true" />
 			<property name="hibernate.format_sql" value="true" />
 		</properties>

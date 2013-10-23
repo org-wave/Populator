@@ -8,7 +8,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.util.Calendar;
-import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -19,20 +18,20 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wave.classes.EmbeddableClass;
+import org.wave.embeddables.BasicEmbeddable;
 import org.wave.entities.BasicEntity;
 import org.wave.entities.EmbeddedEntity;
 import org.wave.entities.IllegalEntity;
-import org.wave.entities.NullEntity;
 import org.wave.entities.OneToOneBidirectionalEntity;
 import org.wave.entities.OneToOneBidirectionalOwner;
 import org.wave.entities.OneToOneEntity;
-import org.wave.entities.PrimaryKeyEntity;
-import org.wave.entities.StaticEntity;
-import org.wave.entities.UnsupportedTypeEntity;
 import org.wave.enums.NotEmptyEnum;
 import org.wave.exceptions.PopulatorException;
 import org.wave.messages.Error;
+import org.wave.types.IdentifierType;
+import org.wave.types.NotNullType;
+import org.wave.types.NullType;
+import org.wave.types.StaticType;
 
 public class PopulatorTest {
 
@@ -43,7 +42,7 @@ public class PopulatorTest {
 	private Populator populator;
 
 	@BeforeClass
-	public static void carrega() {
+	public static void adquire() {
 		factory = Persistence.createEntityManagerFactory("populatorPU");
 	}
 
@@ -63,52 +62,51 @@ public class PopulatorTest {
 
 			fail();
 		} catch (NullPointerException e) {
-			assertThat(e.getMessage(), equalTo(Error.NULL_REFERENCE.getMessage()));
+			assertThat(e.getMessage(), equalTo(Error.NULL_REFERENCE.message()));
 		}
 	}
 
 	@Test
-	public void deveRecusarTipoInvalido() {
-		try {
-			this.populator.populate("");
+	public void naoDevePreencherAtributosDeClasse() {
+		StaticType instance = new StaticType();
 
-			fail();
-		} catch (IllegalArgumentException e) {
-			assertThat(e.getMessage(), equalTo(Error.INVALID_TYPE.getMessage(String.class.getName())));
-		}
+		this.populator.populate(instance);
+
+		assertNull(StaticType.getStandard());
 	}
 
 	@Test
-	public void naoDevePreencherAtributoDeClasse() {
-		StaticEntity entity = new StaticEntity();
+	public void naoDevePreencherIdentificadores() {
+		IdentifierType instance = new IdentifierType();
 
-		this.populator.populate(entity);
+		this.populator.populate(instance);
 
-		assertNull(StaticEntity.getDefaultValue());
+		assertNull(instance.getStandard());
 	}
 
 	@Test
-	public void naoDevePreencherChavePrimaria() {
-		PrimaryKeyEntity entity = new PrimaryKeyEntity();
+	public void naoDevePreencherAtributosQueDevemSerNulos() {
+		NullType instance = new NullType();
 
-		try {
-			this.populator.populate(entity);
-		} catch (Exception e) {
-			fail(e.getMessage());
-		}
+		this.populator.populate(instance);
+
+		assertNull(instance.getStandard());
 	}
 
 	@Test
-	public void naoDevePreencherAtributoNulo() {
-		NullEntity entity = new NullEntity();
+	public void devePreencherOsDemaisAtributos() throws NoSuchFieldException, SecurityException {
+		NotNullType instance = new NotNullType();
 
-		this.populator.populate(entity);
+		this.populator.populate(instance);
 
-		assertNull(entity.getNullValue());
+		assertThat(instance.getStandard(), equalTo(""));
+		assertThat(instance.getAnnotated(), equalTo(""));
 	}
 
+	// TODO Revisado ate aqui.
+
 	@Test
-	public void devePreencherAtributoNaoNulo() {
+	public void devePovoarEntidades() {
 		Calendar today = Calendar.getInstance();
 		today.add(Calendar.DAY_OF_MONTH, 10);
 
@@ -124,33 +122,35 @@ public class PopulatorTest {
 		assertThat(object.getPrimitive(), equalTo(0));
 		assertThat(object.getWrapper(), equalTo(false));
 		assertThat(object.getString(), equalTo(""));
-		assertThat(object.getCalendar().get(Calendar.DAY_OF_MONTH), equalTo(today.get(Calendar.DAY_OF_MONTH)));
-		assertThat(object.getArray(), equalTo(new byte[0]));
-		assertThat(object.getEnumeration(), equalTo(NotEmptyEnum.CONSTANT));
 		assertNull(object.getAtTransient());
+		assertThat(object.getCalendar().get(Calendar.DAY_OF_MONTH), equalTo(today.get(Calendar.DAY_OF_MONTH)));
+		assertThat(object.getEnumeration(), equalTo(NotEmptyEnum.CONSTANT));
+		assertThat(object.getArray(), equalTo(new byte[0]));
 	}
 
 	@Test
-	public void devePreencherObjetoEmbutido() {
+	public void devePovoarObjetosEmbutidos() {
 		EmbeddedEntity entity = new EmbeddedEntity();
 
 		this.populator.populate(entity);
 
+		assertFalse(this.entityManager.contains(entity));
+
 		EmbeddedEntity object = this.entityManager.find(EmbeddedEntity.class, entity.getId());
 		assertNotNull(object.getId());
 
-		EmbeddableClass embeddedValue = object.getEmbeddedValue();
-		assertThat(embeddedValue.getPrimitive(), equalTo(0));
-		assertThat(embeddedValue.getWrapper(), equalTo(false));
-		assertThat(embeddedValue.getString(), equalTo(""));
-		assertThat(embeddedValue.getCalendar().get(Calendar.DAY_OF_MONTH), equalTo(Calendar.getInstance().get(Calendar.DAY_OF_MONTH)));
-		assertThat(embeddedValue.getArray(), equalTo(new byte[0]));
-		assertThat(embeddedValue.getEnumeration(), equalTo(NotEmptyEnum.CONSTANT));
-		assertNull(embeddedValue.getAtTransient());
+		BasicEmbeddable standard = object.getStandard();
+		assertThat(standard.getPrimitive(), equalTo(0));
+		assertThat(standard.getWrapper(), equalTo(false));
+		assertThat(standard.getString(), equalTo(""));
+		assertNull(standard.getAtTransient());
+		assertThat(standard.getCalendar().get(Calendar.DAY_OF_MONTH), equalTo(Calendar.getInstance().get(Calendar.DAY_OF_MONTH)));
+		assertThat(standard.getEnumeration(), equalTo(NotEmptyEnum.CONSTANT));
+		assertThat(standard.getArray(), equalTo(new byte[0]));
 	}
 
 	@Test
-	public void devePreencherRelacionamentoOneToOne() {
+	public void devePovoarRelacionamentosOneToOne() {
 		OneToOneEntity entity = new OneToOneEntity();
 
 		this.populator.populate(entity);
@@ -160,12 +160,12 @@ public class PopulatorTest {
 		OneToOneEntity object = this.entityManager.find(OneToOneEntity.class, entity.getId());
 		assertNotNull(object.getId());
 
-		BasicEntity basicEntity = object.getBasicEntity();
-		assertNotNull(basicEntity.getId());
+		BasicEntity standard = object.getStandard();
+		assertNotNull(standard.getId());
 	}
 
 	@Test
-	public void devePreencherRelacionamentoOneToOneBidirecional() {
+	public void devePovoarRelacionamentosOneToOneBidirecional() {
 		OneToOneBidirectionalEntity entity = new OneToOneBidirectionalEntity();
 
 		this.populator.populate(entity);
@@ -180,27 +180,31 @@ public class PopulatorTest {
 		assertThat(owner.getEntity(), equalTo(entity));
 	}
 
-	@Test
-	public void deveRecusarMapas() {
-		UnsupportedTypeEntity entity = new UnsupportedTypeEntity();
-
-		try {
-			this.populator.populate(entity);
-
-			fail();
-		} catch (UnsupportedOperationException e) {
-			assertThat(e.getMessage(), equalTo(Error.UNSUPPORTED_TYPE.getMessage(Map.class.getName())));
-		}
-	}
-
 	@Test(expected = PopulatorException.class)
-	public void deveLancarExcecaoQuandoOObjetoNaoForPersistido() {
+	public void deveLancarExcecaoQuandoNaoForPossivelPersistirOObjeto() {
 		IllegalEntity entity = new IllegalEntity();
 
 		this.populator.populate(entity);
 	}
 
+	// @Test
+	// public void deveRecusarMapas() {
+	// UnsupportedTypeEntity entity = new UnsupportedTypeEntity();
+	//
+	// try {
+	// this.populator.populate(entity);
+	//
+	// fail();
+	// } catch (UnsupportedOperationException e) {
+	// assertThat(e.getMessage(),
+	// equalTo(Error.UNSUPPORTED_TYPE.getMessage(Map.class.getName())));
+	// }
+	// }
+
 	// TODO Deve lancar excecao para autorelacionamento.
+	// TODO Contar a quantidade de objetos no banco de dados
+	// TODO Criar metodoo que recebe varios objetos.
+	// TODO Criar projeto de exemplo.
 
 	@After
 	public void finaliza() {

@@ -1,3 +1,18 @@
+/*
+   Copyright 2013 Benedito Barbosa Ribeiro Neto/Christian Linhares Peixoto/Mauricio da Silva Marinho
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+ */
 package org.wave.entities;
 
 import java.math.BigDecimal;
@@ -26,15 +41,15 @@ public class BasicEntity {
 
 	private String string;
 
-	private Calendar calendar;
+	@Transient
+	private BigDecimal atTransient;
 
-	private byte[] array;
+	private Calendar calendar;
 
 	@Enumerated(EnumType.STRING)
 	private NotEmptyEnum enumeration;
 
-	@Transient
-	private BigDecimal atTransient;
+	private byte[] array;
 
 	@Override
 	public int hashCode() {
@@ -88,6 +103,38 @@ public class BasicEntity {
 		return true;
 	}
 
+	public int getPrimitive() {
+		return this.primitive;
+	}
+
+	public void setPrimitive(int primitive) {
+		this.primitive = primitive;
+	}
+
+	public Boolean getWrapper() {
+		return this.wrapper;
+	}
+
+	public void setWrapper(Boolean wrapper) {
+		this.wrapper = wrapper;
+	}
+
+	public String getString() {
+		return this.string;
+	}
+
+	public void setString(String string) {
+		this.string = string;
+	}
+
+	public BigDecimal getAtTransient() {
+		return this.atTransient;
+	}
+
+	public void setAtTransient(BigDecimal atTransient) {
+		this.atTransient = atTransient;
+	}
+
 	public Calendar getCalendar() {
 		return this.calendar;
 	}
@@ -96,32 +143,24 @@ public class BasicEntity {
 		this.calendar = calendar;
 	}
 
-	public Long getId() {
-		return this.id;
+	public NotEmptyEnum getEnumeration() {
+		return this.enumeration;
 	}
 
-	public int getPrimitive() {
-		return this.primitive;
-	}
-
-	public Boolean getWrapper() {
-		return this.wrapper;
-	}
-
-	public String getString() {
-		return this.string;
+	public void setEnumeration(NotEmptyEnum enumeration) {
+		this.enumeration = enumeration;
 	}
 
 	public byte[] getArray() {
 		return this.array;
 	}
 
-	public NotEmptyEnum getEnumeration() {
-		return this.enumeration;
+	public void setArray(byte[] array) {
+		this.array = array;
 	}
 
-	public BigDecimal getAtTransient() {
-		return this.atTransient;
+	public Long getId() {
+		return this.id;
 	}
 
 }
